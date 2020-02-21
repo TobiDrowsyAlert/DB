@@ -36,10 +36,13 @@ create table tbl_member (
     name varchar(45),                         # 이름
     email varchar(45),                        # 이메일
     Session_k varchar(45),                    # 세션 키
+    m_check int,                                # 체크용
     constraint user_id primary key (user_id)
 );
 
-    
+drop table tbl_member;
+select *from tbl_member;
+
 ################################ 테스트용 데이터
     
 desc tbl_static;   
@@ -54,7 +57,7 @@ insert into tbl_static values('1','10','5','rlgus','1','1','2020-01-12','00:42:0
 insert into tbl_static values('2','15','3','thdrl','3','2','2020-01-01','00:30:00','2','1','11.462','18.2863','19.276','하품');
 insert into tbl_static values('3','6','8','thdrl','0','1','2020-01-06','00:28:00','5','0','15.532','21.2476','3.276','고개');
 insert into tbl_static values('4','3','6','sgere','0','1','2020-02-02','00:55:00','7','0','13.232','32.2753','9.243','눈');
-insert into tbl_static values('5','13','7','gdfwd','1','1','2020-01-30','01:02:00','9','1','12.872','34.2453','37.243','');
+insert into tbl_static values('5','13','7','gdfwd','1','1','2020-01-30','01:02:00','9','1','12.872','34.2453','37.243','눈');
 
 insert into tbl_static values('6','12','2','rlgus','2','2','2020-02-06','00:24:00','16','1','9.762','15.2573','9.243','고개');
 
@@ -74,12 +77,12 @@ select concat(name , '님의 아이디는', user_id , '입니다.') from tbl_mem
 
 ################################ 테스트용 데이터
 
-insert into tbl_member values('rlgus','1245','기현','rlgus@naver.com','4');
-insert into tbl_member values('thdrl','5536','송기','thdrl@naver.com','2');
-insert into tbl_member values('sgere','3462','동수','ehdtn@naver.com','6');
-insert into tbl_member values('gdfwd','2435','영이','duddl@naver.com','5');
+insert into tbl_member values('rlgus','1245','기현','rlgus@naver.com','4','1');
+insert into tbl_member values('thdrl','5536','송기','thdrl@naver.com','2','1');
+insert into tbl_member values('sgere','3462','동수','ehdtn@naver.com','6','1');
+insert into tbl_member values('gdfwd','2435','영이','duddl@naver.com','5','1');
 
-insert into tbl_member values('test','5321','테스트용','gdfge@naver.com','1');
+insert into tbl_member values('test','5321','테스트용','gdfge@naver.com','1','1');
 
 
 
@@ -248,8 +251,6 @@ call tbl_member_update('rlgus','1111','쏭기','rrrrr@naver.com','1');
 
 
 
-
-
 #######################  tbl_static_insert 함수 매개변수 지정하여 삽입하기
 
 call tbl_static_insert('17','56','56','tnduslds','7','7','2222-11-11','00:11:11',
@@ -263,8 +264,6 @@ call tbl_static_read();
 call tbl_static_delete('tnduslds');
 
 
-
-
 ################################ 테스트용 데이터 업데이트  
 update tbl_static set blind = '27' where static_no = '2';
 select * from tbl_static;
@@ -273,41 +272,59 @@ select * from tbl_static;
 select * from tbl_member;
 delete from tbl_member where user_id = 'test';   # 유저아디가 test인것을 삭제 회원정보삭제
 select * from tbl_member;
-
-
-
-    # declare test_num1 int default 0;  # 변수 선언
-	# set test_num1 = 11;               # 변수 값 변경
     
-
-
 
 #########################      로그인(login), 회원가입(sign Up) 함수
 delimiter //
 create procedure login(
 in u_user_id varchar(45), 
 in u_user_pw varchar(45),
-out u_check int
+out m_massage varchar(20)
 )
 begin
-	# select * from tbl_member where user_id = u_user_id and user_pw = u_user_pw;
-	# set u_check = '1';
-    select user_id
+    select m_check
+    into m_massage
     from tbl_member
     where user_id = u_user_id and user_pw = u_user_pw;
-    set @u_check = 1;
+    
+	if m_massage = 1 then 
+		set m_massage = '로그인 성공';
+	else
+		set m_massage = '로그인 실패';
+	end if;    
 end//
 delimiter ;
 
-set @u_check = 0;
-select @counter;
 
-call login('rlgus', '1111','0');
-select @u_check;
+call login('rlgus', '1245',@m_massage);    #  성공
+select @m_massage; 	                       #  체크
+
+call login('rlgussss','12121',@m_massage);  # 실패
+select @m_massage;
 
 drop procedure login;
+##############################################################################
 
-call tbl_member_read();
+############################             눈깜빡임 통계치 개인화 테이블에 최신화 하기
+delimiter //
+create procedure test(
+in blink int,                      # 눈 깜빡 이유일 때 값
+in n int,                          # 통계 n
+in u_user_id varchar(45),
+in average int
+)
+	begin
+    
+    set average = 21 * 10 +  blink*(1/n);      # 계산식???
+    
+    # 업데이트하기
+    update tbl_personal set blink_avg = average where user_id = u_user_id;
+    end //
+delimiter ;
+
+select * from tbl_personal;
+call test('1000','1','rlgus','0');   
+select * from tbl_personal;
 
 
 
